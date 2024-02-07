@@ -1,5 +1,5 @@
-package main
-package mapreduce
+//package main
+//package mapreduce
 package server
 import "errors"
 
@@ -21,7 +21,7 @@ type CounterMap struct {
 // RPC func?
 
 // map function
-func (t *WordCount) map(args *InputChunk, reply *CounterMap) error {
+func (t *WordCount) Map(args *InputChunk, reply *CounterMap) error {
 	//for 
 	*reply = "test reply" //this is going to be key value, pair of a word and its count 1
 	//this reply is going to be the location of the key value pair, and this location gets sent to reduce
@@ -48,7 +48,7 @@ to reducer so that the reducer
 Find all the values of the word through reduce and then a new reduce process ocucrs
 */
 // reducer looks at what information is stored in files and returns to leader?
-func (t *Wordcount) reduce(args *Maps, reply *CounterMap) {
+func (t *Wordcount) Reduce(args *Maps, reply *CounterMap) {
 
 }
 
