@@ -8,17 +8,24 @@ type WordCount int
 
 //InputChunk in this case is the chunk of input we plan to pass to a mapepr
 type InputChunk struct{
-	string chunkID
+	//string chunkID
 	string chunkContent
+}
+
+type CounterMap struct {
+	dict map[string]int //= make(map[string]int)
 }
 
 // how does the leader access the map information stored in local files output
 // fortm this RPC?
 // RPC func?
-func (t *WordCount) map(args *InputChunk, reply *String) error {
+
+// map function
+func (t *WordCount) map(args *InputChunk, reply *CounterMap) error {
+	//for 
 	*reply = "test reply" //this is going to be key value, pair of a word and its count 1
 	//this reply is going to be the location of the key value pair, and this location gets sent to reduce
-	return nil
+	
 	//should the leader be accessing intermediate info via reply from RPC
 	//or should leader have an rpc that gets called by mapper periodically int order to
 	//pass location info?
@@ -41,18 +48,24 @@ to reducer so that the reducer
 Find all the values of the word through reduce and then a new reduce process ocucrs
 */
 // reducer looks at what information is stored in files and returns to leader?
-func (t *Wordcount)
+func (t *Wordcount) reduce(args *Maps, reply *CounterMap) {
 
+}
+
+// leader reads in; make a struct of a map of values and store it there
+// main function in worker depends, leader should have a main function
+// worker is the processt that does the work
 
 // when the reduction is done, outputs to local files and then files are combined
 // and stored in the DFS
 
-// words := new(WordCount)
-// rpc.Register(words)
-// rpc.HandleHTTP()
-// l, err := net.Listen("tcp", ":1234")
-// if err != nil {
-// 	log.Fatal("listen error:", err)
-// }
-// go http.Serve(l, nil)
+words := new(WordCount)
+rpc.Register(words)
+rpc.HandleHTTP()
+l, err := net.Listen("tcp", ":1234")
+if err != nil {
+	log.Fatal("listen error:", err)
+}
+go http.Serve(l, nil)
+
 
