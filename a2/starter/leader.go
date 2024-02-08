@@ -2,25 +2,43 @@ package main
 //package server
 import (
 	"net/rpc"
+	"fmt"
+	//"client"
+	"log"
+
+	//"errors"
+
+	
 )
+// leader and worker are servers
+// the leader is supposed to call the worker's rpcs
+// a worker 
 type Leader struct {
 	files [] string // files
 	// address of worker computer?
 }
 
+type Args struct {
+	c []string
+}
 //maybe the leader has an RPC that map can call in order to notify  the leader where it has stored info
 
-func rpcCall(chunk []string) {
-	//call map function
-	//FIX
-	args := &server.Args{chunk}
-	var reply int
-	err = client.Call("WordCount.Map", args, &reply)
-	if err != nil {
-		log.Fatal("map error:", err)
-	}
-	fmt.Printf("Map: %d", reply)
-	}
+// func rpcCall(chunk []string) {
+// 	//call map function
+// 	//FIX
+// 	// args := &server.Args{chunk}
+// 	args := &Args{chunk}
+// 	fmt.Printf("Reached");
+// 	var reply int
+// 	err = client.Call("WordCount.Map", args, &reply)
+// 	if err != nil {
+// 		log.Fatal("map error:", err)
+// 	}
+// 	fmt.Printf("Map: %d", reply)
+// 	}
+	// map := new(Map)
+	// divCall := client.Go("Arith.Divide", args, quotient, nil)
+	// replyCall := <-divCall.Done	// will be equal to divCall
 	
 func main() {
 	
@@ -76,8 +94,17 @@ func main() {
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-
-	rpcCall(["hello"])
-
+	
+	chunk := []string{"hello"}
+	//rpcCall(array)
+	args := &Args{chunk}
+	fmt.Printf("Reached");
+	var reply int
+	err = client.Call("WordCount.Map", args, &reply)
+	if err != nil {
+		log.Fatal("map error:", err)
+	}
+	fmt.Printf("Map: %d", reply)
+	
 
 }

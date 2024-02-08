@@ -1,7 +1,18 @@
-//package main
-//package mapreduce
-package server
-import "errors"
+package main
+
+//package server
+import (
+	//"errors"
+	"fmt"
+	//"client"
+	"log"
+	"net"
+	"net/rpc"
+
+	"net/http"
+
+)
+// need to be part of the same package to acces eachother's code
 
 type WordCount int
 // Question: is parsing the doc done outside a function?
@@ -9,21 +20,23 @@ type WordCount int
 //InputChunk in this case is the chunk of input we plan to pass to a mapepr
 type InputChunk struct{
 	//string chunkID
-	string chunkContent
+	ChunkContent string
 }
 
-type CounterMap struct {
-	dict map[string]int //= make(map[string]int)
-}
+// type CounterMap struct {
+// 	dict map[string]int //= make(map[string]int)
+// }
 
 // how does the leader access the map information stored in local files output
 // fortm this RPC?
 // RPC func?
 
 // map function
-func (t *WordCount) Map(args *InputChunk, reply *CounterMap) error {
+func (t *WordCount) Map(args *InputChunk, reply *map[string]int) error {
 	//for 
-	*reply = "test reply" //this is going to be key value, pair of a word and its count 1
+	fmt.Println("Hello world")
+	dict := make(map[string]int)
+	*reply = dict //this is going to be key value, pair of a word and its count 1
 	//this reply is going to be the location of the key value pair, and this location gets sent to reduce
 	
 	//should the leader be accessing intermediate info via reply from RPC
@@ -37,6 +50,7 @@ func (t *WordCount) Map(args *InputChunk, reply *CounterMap) error {
 	//or some other contiguous chunk? 
 
 	// who/what reads the files themselves - prolly the leader?
+	return nil
 }
 /*
 Step 1: leader calls RPC map and passes InputChunk w file info to parse
@@ -48,7 +62,7 @@ to reducer so that the reducer
 Find all the values of the word through reduce and then a new reduce process ocucrs
 */
 // reducer looks at what information is stored in files and returns to leader?
-func (t *Wordcount) Reduce(args *Maps, reply *CounterMap) {
+func (t *WordCount) Reduce(args *map[string]int, reply *map[string]int) { //originally had args *Maps
 
 }
 
@@ -59,13 +73,16 @@ func (t *Wordcount) Reduce(args *Maps, reply *CounterMap) {
 // when the reduction is done, outputs to local files and then files are combined
 // and stored in the DFS
 
-words := new(WordCount)
-rpc.Register(words)
-rpc.HandleHTTP()
-l, err := net.Listen("tcp", ":1234")
-if err != nil {
-	log.Fatal("listen error:", err)
+	
+func main() {
+	// Worker publishes the rpc
+	words := new(WordCount)
+	rpc.Register(words)
+	rpc.HandleHTTP()
+	l, err := net.Listen("tcp", "127.0.0.1:1234")
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	go http.Serve(l, nil)
+
 }
-go http.Serve(l, nil)
-
-
