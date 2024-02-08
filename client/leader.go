@@ -18,9 +18,13 @@ type Leader struct {
 	// address of worker computer?
 }
 
-type Args struct {
-	c []string
+
+type InputChunk struct{
+	//string chunkID
+	ChunkContent string
 }
+
+
 //maybe the leader has an RPC that map can call in order to notify  the leader where it has stored info
 
 // func rpcCall(chunk []string) {
@@ -95,11 +99,12 @@ func main() {
 		log.Fatal("dialing:", err)
 	}
 	
-	chunk := []string{"hello"}
+	chunk := "hello"
+	fmt.Print("reach line 99");
 	//rpcCall(array)
-	args := &Args{chunk}
+	args := chunk//go's version of a constructor, passing the paramter to be saved in the object
 	fmt.Printf("Reached");
-	var reply int
+	var reply map[string]int
 	err = client.Call("WordCount.Map", args, &reply)
 	if err != nil {
 		log.Fatal("map error:", err)

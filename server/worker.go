@@ -32,7 +32,7 @@ type InputChunk struct{
 // RPC func?
 
 // map function
-func (t *WordCount) Map(args *InputChunk, reply *map[string]int) error {
+func (t *WordCount) Map(content string, reply *map[string]int) error {
 	//for 
 	fmt.Println("Hello world")
 	dict := make(map[string]int)
@@ -62,8 +62,9 @@ to reducer so that the reducer
 Find all the values of the word through reduce and then a new reduce process ocucrs
 */
 // reducer looks at what information is stored in files and returns to leader?
-func (t *WordCount) Reduce(args *map[string]int, reply *map[string]int) { //originally had args *Maps
-
+func (t *WordCount) Reduce(args *map[string]int, reply *map[string]int) {
+	//originally had args *Maps
+	//return nil
 }
 
 // leader reads in; make a struct of a map of values and store it there
@@ -83,6 +84,6 @@ func main() {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	go http.Serve(l, nil)
+	http.Serve(l, nil)
 
 }
