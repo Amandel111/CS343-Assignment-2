@@ -94,15 +94,16 @@ func main() {
 
 	//dial the server
 	serverAddress := "127.0.0.1"
-	client, err := rpc.DialHTTP("tcp", serverAddress + ":1234")
+	client, err := rpc.DialHTTP("tcp", serverAddress + ":1235")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 	
+	// Calling Map
 	chunk := "hello"
-	fmt.Print("reach line 99");
+	
 	//rpcCall(array)
-	args := chunk//go's version of a constructor, passing the paramter to be saved in the object
+	args := chunk //go's version of a constructor, passing the paramter to be saved in the object
 	fmt.Printf("Reached");
 	var reply map[string]int
 	err = client.Call("WordCount.Map", args, &reply)
@@ -110,6 +111,15 @@ func main() {
 		log.Fatal("map error:", err)
 	}
 	fmt.Printf("Map: %d", reply)
+
+	// Calling Reduce
+	listOfMaps := make([]map[string]int, 1)
+	var response map[string]int
+	err = client.Call("WordCount.Reduce", listOfMaps, &response) // fix
+	if err != nil {
+		log.Fatal("reduce error:", err)
+	}
+	fmt.Printf("Reduce: %d", reply)
 	
 
 }

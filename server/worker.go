@@ -27,14 +27,21 @@ type InputChunk struct{
 // 	dict map[string]int //= make(map[string]int)
 // }
 
+// type CounterMap map[string]int // may not need
+
 // how does the leader access the map information stored in local files output
 // fortm this RPC?
 // RPC func?
 
 // map function
+
+// var m CounterMap
+
 func (t *WordCount) Map(content string, reply *map[string]int) error {
 	//for 
 	fmt.Println("Hello world")
+	fmt.Println("Mapper", content)
+	fmt.Println(reply)
 	dict := make(map[string]int)
 	*reply = dict //this is going to be key value, pair of a word and its count 1
 	//this reply is going to be the location of the key value pair, and this location gets sent to reduce
@@ -62,9 +69,15 @@ to reducer so that the reducer
 Find all the values of the word through reduce and then a new reduce process ocucrs
 */
 // reducer looks at what information is stored in files and returns to leader?
-func (t *WordCount) Reduce(args *map[string]int, reply *map[string]int) {
+func (t *WordCount) Reduce(args *[]map[string]int, reply *map[string]int) error {
 	//originally had args *Maps
 	//return nil
+	fmt.Println("Hello world")
+	fmt.Println("Reducer", args)
+	fmt.Println(reply)
+	dict := make(map[string]int)
+	*reply = dict
+	return nil
 }
 
 // leader reads in; make a struct of a map of values and store it there
@@ -80,7 +93,7 @@ func main() {
 	words := new(WordCount)
 	rpc.Register(words)
 	rpc.HandleHTTP()
-	l, err := net.Listen("tcp", "127.0.0.1:1234")
+	l, err := net.Listen("tcp", "127.0.0.1:1235")
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
