@@ -8,8 +8,9 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-
+	"regexp"
 	"net/http"
+	"strings"
 
 )
 // need to be part of the same package to acces eachother's code
@@ -39,12 +40,22 @@ type InputChunk struct{
 
 func (t *WordCount) Map(content string, reply *map[string]int) error {
 	//for 
-	fmt.Println("Hello world")
-	fmt.Println("Mapper", content[:20])
-	fmt.Println(reply)
-	dict := make(map[string]int)
 	
-	dict["hello"] = 1
+	// fmt.Println("Hello world")
+	// fmt.Println("Mapper", content[:20])
+	// fmt.Println(reply)
+	dict := make(map[string]int)
+
+	re1 := regexp.MustCompile(`\p{P}|[^\S+]`)
+	wordList := re1.Split(content, -1)
+
+	for j := 0; j < len(wordList); j++{
+		//if wordList[j] != ""{
+			lowercaseWord := strings.ToLower(wordList[j])
+			dict[lowercaseWord] += 1
+		//}
+	}
+	fmt.Print("reply dict ", dict)
 	*reply = dict //this is going to be key value, pair of a word and its count 1
 	
 	return nil
@@ -56,9 +67,16 @@ func (t *WordCount) Reduce(args *[]map[string]int, reply *map[string]int) error 
 	//return nil
 	fmt.Println("Hello world")
 	fmt.Println("Reducer", args)
-	fmt.Println(reply)
-	dict := make(map[string]int)
-	*reply = dict
+	//fmt.Println(reply)
+	//dict := make(map[string]int)
+
+	combinedMap := make(map[string]int)
+    for _, m := range *args {
+        for key, val := range m {
+            combinedMap[key] += val
+        }
+    }
+	*reply = combinedMap
 	return nil
 }
 
@@ -69,7 +87,7 @@ func main() {
 	words := new(WordCount)
 	rpc.Register(words)
 	rpc.HandleHTTP()
-	l, err := net.Listen("tcp", "127.0.0.1:1234")
+	l, err := net.Listen("tcp", "127.0.0.1:1235")
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}

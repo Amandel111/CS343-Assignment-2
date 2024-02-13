@@ -3,7 +3,6 @@ package main
 import (
 	"net/rpc"
 	"fmt"
-	//"client"
 	"log"
 	"strings"
 	//"errors"
@@ -40,24 +39,31 @@ func MapCall(content string, port int) map[string]int {
 	if err != nil {
 		log.Fatal("map error:", err)
 	}
-	fmt.Printf("Map: %d", reply)
+	//fmt.Printf("Map: %d", reply)
 
 	return reply
 }
 
-// func ReduceCall(mapList []map[string]int) map[string]int{
-// 	// Calling Reduce
-// 	//listOfMaps := make([]map[string]int, 1)
-// 	var response map[string]int
-// 	err = client.Call("WordCount.Reduce", mapList, &response) // fix
-// 	if err != nil {
-// 		log.Fatal("reduce error:", err)
-// 	}
-// 	fmt.Printf("Reduce: %d", reply)
 
-// 	return response
+func ReduceCall(mapList []map[string]int, port int) map[string]int{
+	// dial server
+	serverAddress := "127.0.0.1:"
+	client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(port))
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+
+	//call reduce service
+	var response map[string]int
+	err = client.Call("WordCount.Reduce", mapList, &response) // fix
+	if err != nil {
+		log.Fatal("reduce error:", err)
+	}
+	//fmt.Printf("Reduce: %d", response)
+
+	return response
 	
-// }
+}
 	
 func main() {
 
@@ -85,6 +91,12 @@ func main() {
 		}
 		defer file.Close()
 
+		fi, err := file.Stat()
+		 if err != nil {
+			log.Fatal(err)
+		}
+		sizeOfFile := fi.Size();
+		fmt.Print("size of file", sizeOfFile);
 		fileScanner := bufio.NewScanner(file)
 
 		fileScanner.Split(bufio.ScanLines)
@@ -98,9 +110,10 @@ func main() {
 	var numChunks int = 1 //this should always be equal to the number of workers running - 1 if numChunks > 1
 
 	numLinesPerChunk := len(lines) / numChunks
-	listOfMaps := make([]map[string]int, numChunks+1)
+	// listOfMaps := make([]map[string]int, numChunks+1)
+	var listOfMaps []map[string]int
 
-	portNumber := 1233
+	portNumber := 1234
     for index := 0; index < numChunks; index++ {
 
         lowerBound := index * numLinesPerChunk
@@ -109,17 +122,51 @@ func main() {
 		//loop thorugh slice, append each element to contentAsString
 		contentAsString := strings.Join(slice, " ")
         //wg.Add(1) // do we need this?
+		//listOfMaps[index] = MapCall(contentAsString ,portNumber)
+        
+		// take care of case?
+		numCallsToMap := len(contentAsString) / 100
+		for i := 0; i < numCallsToMap-1; i++ {
+			listOfMaps = append(listOfMaps, MapCall(contentAsString[i*100:(i+1)*100],portNumber))
+		}
+
 		portNumber += 1 
-        listOfMaps = append(listOfMaps, MapCall(contentAsString ,portNumber))
     }
+	// portNumber += 1
+	
     slice := lines[numLinesPerChunk*numChunks : len(lines)]
 	contentAsString := strings.Join(slice, " ")
-
+	numCallsToMap := len(contentAsString) / 100
+	listOfMaps = append(listOfMaps, MapCall(contentAsString[(numCallsToMap-1)*100:numCallsToMap*100],portNumber))
+	
 	listOfMaps = append(listOfMaps, MapCall(contentAsString ,portNumber))
-	fmt.Print("list of maps", listOfMaps)
+	//listOfMaps[numChunks] = MapCall(contentAsString ,portNumber)
+	//fmt.Print("list of maps", len(listOfMaps))
+	
+	reduced :=  ReduceCall(listOfMaps, portNumber+1) // run on new port
+	//fmt.Print("reduced ", reduced)
 
-    //wg.Add(1)
-    //go start_thread(slice, numChunks)
-    //wg.Wait
+	// Remove the output directory if it already exists
+    // err = os.RemoveAll("output")
+    // if err != nil {
+    //     fmt.Println(err)
+    // }
+   
+    // // Create output directory and file
+    // err2 := os.Mkdir("output", os.ModePerm)
+    // if err2 != nil {
+    //     fmt.Println("Error creating directory:", err2)
+    // }
+
+	file, err := os.Create("output" + "/" + "results2.txt")
+    if err != nil {
+        fmt.Println("failed to create file")
+    }
+
+	for key, value := range reduced{
+		s := key + " " + strconv.FormatInt(int64(value), 10) + "\n"
+		file.WriteString(s)
+	}
+	
 
 }
