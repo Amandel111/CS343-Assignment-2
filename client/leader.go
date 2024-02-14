@@ -26,7 +26,7 @@ type InputChunk struct{
 
 //maybe the leader has an RPC that map can call in order to notify  the leader where it has stored info
 
-func MapCall(client *rpc.Client, content string, port int) map[string]int {
+func MapCall(client *rpc.Client, content string, port int) map[string]int { // make the channel an input
 	
 	
 	//call map RPC
@@ -40,8 +40,10 @@ func MapCall(client *rpc.Client, content string, port int) map[string]int {
 	}
 	
 	//fmt.Printf("Map: %d", reply)
+	
 
-	//return client.Go("WordCount.Map", content, &reply, nil)
+	call := client.Go("WordCount.Map", content, &reply, nil)
+	
 	//return client.Call("WordCount.Map", content, &reply)
 	return reply
 }
@@ -116,6 +118,8 @@ func main() {
 	// listOfMaps := make([]map[string]int, numChunks+1)
 	var listOfMaps []map[string]int
 
+	replies := make([]chan map[string]int, ) // finish making a list
+
 	portNumber := 1234
     for index := 0; index < numChunks; index++ {
 
@@ -140,8 +144,20 @@ func main() {
 			// <- result.Done()
 			// listOfMaps = append(listOfMaps, result)
 
-			listOfMaps = append(listOfMaps, MapCall(client, contentAsString[i*100:(i+1)*100],portNumber))
+			// listOfMaps = append(listOfMaps, MapCall(client, contentAsString[i*100:(i+1)*100],portNumber))
+			var reply map[string]int
+			//err := client.Call("WordCount.Map", contentAsString[i*100:(i+1)*100], &reply)
+			//<- WordCount.Map.Done()
+			// if err != nil {
+			// 	log.Fatal("map error:", err)
+			// }
 			
+			//fmt.Printf("Map: %d", reply)
+			
+			call := client.Go("WordCount.Map", contentAsString[i*100:(i+1)*100], &reply, nil)
+			reply <- call.Done //channel
+			//listOfMaps = append(listOfMaps, reply)
+			replies = append(replies, reply)
 		}
 		// count = 
 		portNumber += 1 
@@ -162,6 +178,9 @@ func main() {
 	// <-workerCall.Done
 	listOfMaps = append(listOfMaps, MapCall(client, contentAsString[(numCallsToMap)*100:],portNumber))
 	
+	for i := 0; i <= numCallsToMap; i++ {
+		
+	}
 	//listOfMaps = append(listOfMaps, MapCall(contentAsString ,portNumber))
 	//listOfMaps[numChunks] = MapCall(contentAsString ,portNumber)
 	//fmt.Print("list of maps", len(listOfMaps))
