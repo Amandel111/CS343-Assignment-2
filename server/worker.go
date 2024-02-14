@@ -87,10 +87,16 @@ func main() {
 	words := new(WordCount)
 	rpc.Register(words)
 	rpc.HandleHTTP()
-	l, err := net.Listen("tcp", "127.0.0.1:1235")
+	l, err := net.Listen("tcp", "127.0.0.1:1237")
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
 	http.Serve(l, nil)
 
 }
+
+// 1 process for each worker,
+// multiple workers are running at the sam time
+// 1 leadr is callign 8 worksr
+// each work
+// reduce everytime you map

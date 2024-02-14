@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"bufio"
+	// "context"
 
 	
 )
@@ -25,22 +26,23 @@ type InputChunk struct{
 
 //maybe the leader has an RPC that map can call in order to notify  the leader where it has stored info
 
-func MapCall(content string, port int) map[string]int {
-	serverAddress := "127.0.0.1:"
-	client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(port))
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
+func MapCall(client *rpc.Client, content string, port int) map[string]int {
+	
+	
 	//call map RPC
 	// args := content //go's version of a constructor, passing the paramter to be saved in the object
-	fmt.Printf("Reached");
+	//fmt.Printf("Reached");
 	var reply map[string]int
-	err = client.Call("WordCount.Map", content, &reply)
+	err := client.Call("WordCount.Map", content, &reply)
+	//<- WordCount.Map.Done()
 	if err != nil {
 		log.Fatal("map error:", err)
 	}
+	
 	//fmt.Printf("Map: %d", reply)
 
+	//return client.Go("WordCount.Map", content, &reply, nil)
+	//return client.Call("WordCount.Map", content, &reply)
 	return reply
 }
 
@@ -61,6 +63,7 @@ func ReduceCall(mapList []map[string]int, port int) map[string]int{
 	}
 	//fmt.Printf("Reduce: %d", response)
 
+	//return client.Call("WordCount.Reduce", mapList, &response)
 	return response
 	
 }
@@ -123,40 +126,60 @@ func main() {
 		contentAsString := strings.Join(slice, " ")
         //wg.Add(1) // do we need this?
 		//listOfMaps[index] = MapCall(contentAsString ,portNumber)
-        
+        serverAddress := "127.0.0.1:"
+		client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(portNumber))
 		// take care of case?
 		numCallsToMap := len(contentAsString) / 100
 		for i := 0; i < numCallsToMap-1; i++ {
-			listOfMaps = append(listOfMaps, MapCall(contentAsString[i*100:(i+1)*100],portNumber))
-		}
+			
+			// client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(port))
+			if err != nil {
+				log.Fatal("dialing:", err)
+			}
+			// result := MapCall(client, contentAsString[i*100:(i+1)*100],portNumber)
+			// <- result.Done()
+			// listOfMaps = append(listOfMaps, result)
 
+			listOfMaps = append(listOfMaps, MapCall(client, contentAsString[i*100:(i+1)*100],portNumber))
+			
+		}
+		// count = 
 		portNumber += 1 
+
+		
     }
 	// portNumber += 1
-	
+	print(portNumber)
     slice := lines[numLinesPerChunk*numChunks : len(lines)]
 	contentAsString := strings.Join(slice, " ")
 	numCallsToMap := len(contentAsString) / 100
-	listOfMaps = append(listOfMaps, MapCall(contentAsString[(numCallsToMap-1)*100:numCallsToMap*100],portNumber))
+	serverAddress := "127.0.0.1:"
+	client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(portNumber))
+	// client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(port))
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	// <-workerCall.Done
+	listOfMaps = append(listOfMaps, MapCall(client, contentAsString[(numCallsToMap)*100:],portNumber))
 	
-	listOfMaps = append(listOfMaps, MapCall(contentAsString ,portNumber))
+	//listOfMaps = append(listOfMaps, MapCall(contentAsString ,portNumber))
 	//listOfMaps[numChunks] = MapCall(contentAsString ,portNumber)
 	//fmt.Print("list of maps", len(listOfMaps))
 	
 	reduced :=  ReduceCall(listOfMaps, portNumber+1) // run on new port
 	//fmt.Print("reduced ", reduced)
 
-	// Remove the output directory if it already exists
-    // err = os.RemoveAll("output")
-    // if err != nil {
-    //     fmt.Println(err)
-    // }
+	//Remove the output directory if it already exists
+    err = os.RemoveAll("output")
+    if err != nil {
+        fmt.Println(err)
+    }
    
-    // // Create output directory and file
-    // err2 := os.Mkdir("output", os.ModePerm)
-    // if err2 != nil {
-    //     fmt.Println("Error creating directory:", err2)
-    // }
+    // Create output directory and file
+    err2 := os.Mkdir("output", os.ModePerm)
+    if err2 != nil {
+        fmt.Println("Error creating directory:", err2)
+    }
 
 	file, err := os.Create("output" + "/" + "results2.txt")
     if err != nil {
@@ -170,3 +193,12 @@ func main() {
 	
 
 }
+
+//<-workerCall.Done -> name of the rpc request
+
+// makerquest - rpc call
+// each worker is workng individually
+// calling worker before it finished the process
+// which worker is which worker
+
+// not a waitgroup
