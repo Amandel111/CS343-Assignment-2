@@ -118,8 +118,9 @@ func main() {
 	// listOfMaps := make([]map[string]int, numChunks+1)
 	var listOfMaps []map[string]int
 
-	replies := make([]chan map[string]int, ) // finish making a list
-
+	var replies = make([]chan *rpc.Call, numChunks+1) // finish making a list
+	
+	// when the worker is done, output of worker
 	portNumber := 1234
     for index := 0; index < numChunks; index++ {
 
@@ -134,6 +135,8 @@ func main() {
 		client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(portNumber))
 		// take care of case?
 		numCallsToMap := len(contentAsString) / 100
+
+		reply := *rpc.Call
 		for i := 0; i < numCallsToMap-1; i++ {
 			
 			// client, err := rpc.DialHTTP("tcp", serverAddress + strconv.Itoa(port))
@@ -155,12 +158,13 @@ func main() {
 			//fmt.Printf("Map: %d", reply)
 			
 			call := client.Go("WordCount.Map", contentAsString[i*100:(i+1)*100], &reply, nil)
-			reply <- call.Done //channel
+			//list 
 			//listOfMaps = append(listOfMaps, reply)
-			replies = append(replies, reply)
+			//replies = append(replies, reply)
 		}
 		// count = 
 		portNumber += 1 
+		replies[index] <- call.Done //channel   //list[0].Done  // call to index 0, check if it's done by waiting n list index0.Done
 
 		
     }
